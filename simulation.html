@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>jija</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0d0d1a;
+            overflow: hidden;
+        }
+        
+        #simulation-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(ellipse at center, #16162a 0%, #0d0d1a 70%);
+        }
+        
+        .header {
+            position: fixed;
+            top: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            z-index: 10;
+            pointer-events: none;
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 300;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            background: linear-gradient(90deg, #6366f1, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header p {
+            color: #555;
+            font-size: 0.85rem;
+            margin-top: 8px;
+        }
+        
+        .node circle {
+            stroke-width: 2px;
+            cursor: grab;
+        }
+        
+        .node circle:hover {
+            stroke-width: 3px;
+            filter: brightness(1.2);
+        }
+        
+        .node:active circle {
+            cursor: grabbing;
+        }
+        
+        .link {
+            stroke: rgba(99, 102, 241, 0.5);
+            stroke-width: 2px;
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 20;
+            padding: 8px 14px;
+            background: rgba(22, 22, 42, 0.9);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 8px;
+            color: #a855f7;
+            text-decoration: none;
+            font-size: 13px;
+            backdrop-filter: blur(10px);
+            transition: all 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(168, 85, 247, 0.15);
+            border-color: #a855f7;
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 10;
+            background: rgba(22, 22, 42, 0.9);
+            padding: 15px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .controls label {
+            color: #888;
+            font-size: 0.8rem;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .controls input[type="range"] {
+            width: 150px;
+            accent-color: #a855f7;
+        }
+
+        .controls .value {
+            color: #a855f7;
+            font-weight: 500;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-btn">← Home</a>
+    <div class="header">
+        <h1>jija</h1>
+        <p>Click to add • Drag to connect • S + click = delete • P + hold = auto-spawn</p>
+    </div>
+    <div class="controls">
+        <label>
+            Max Node Size
+            <input type="range" id="maxSizeSlider" min="10" max="500" value="300">
+            <span class="value" id="maxSizeValue">300</span>
+        </label>
+        <label>
+            Repulsion Force
+            <input type="range" id="forceSlider" min="500" max="5000" value="5000">
+            <span class="value" id="forceValue">5000</span>
+        </label>
+        <label>
+            Neighbours to Check
+            <input type="range" id="neighboursSlider" min="1" max="30" value="15">
+            <span class="value" id="neighboursValue">15</span>
+        </label>
+        <label>
+            Auto-spawn Rate (ms)
+            <input type="range" id="spawnRateSlider" min="20" max="500" value="102">
+            <span class="value" id="spawnRateValue">102</span>
+        </label>
+        <label>
+            Neighbour Link Chance (%)
+            <input type="range" id="neighbourLinkSlider" min="0" max="100" value="0">
+            <span class="value" id="neighbourLinkValue">0</span>
+        </label>
+    </div>
+    <svg id="simulation-canvas"></svg>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="simulation.js"></script>
+</body>
+</html>

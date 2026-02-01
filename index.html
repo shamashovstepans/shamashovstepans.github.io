@@ -3,368 +3,374 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unity Asmdef Dependency Visualizer</title>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <title>Stepan's Tools</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
+        * {
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #1a1a1a;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: 'Outfit', sans-serif;
+            background: #0a0a0f;
             color: #ffffff;
-            overflow: hidden;
+            overflow-x: hidden;
         }
 
-        .container {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-        }
-
-        .header {
-            background: #2d2d2d;
-            border-bottom: 1px solid #444;
-            flex-shrink: 0;
-        }
-
-        .header-top {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 15px 20px 10px 20px;
-        }
-
-        .header-bottom {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px 15px 20px;
-            gap: 20px;
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-        }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-        }
-
-        .header h1 {
-            margin: 0;
-            font-size: 20px;
-            font-weight: 600;
-        }
-
-        .controls-section {
-            display: flex;
-            align-items: center;
-            gap: 30px;
-            flex: 1;
-        }
-
-        .file-controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .viz-controls {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .status-section {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 5px;
-        }
-
-        .control-label {
-            color: #ccc;
-            margin-right: 10px;
-            font-weight: 500;
-        }
-
-        .kofi-button {
-            display: inline-flex;
-            align-items: center;
-            padding: 8px 16px;
-            background: linear-gradient(135deg, #ff5f5f, #ff4757);
-            color: white;
-            text-decoration: none;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 4px rgba(255, 71, 87, 0.3);
-        }
-
-        .kofi-button:hover {
-            background: linear-gradient(135deg, #ff4757, #ff3742);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(255, 71, 87, 0.4);
-            color: white;
-        }
-
-        .kofi-text {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-
-        .file-input {
-            padding: 8px 16px;
-            background: #4a90e2;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background 0.2s;
-        }
-
-        .file-input:hover {
-            background: #357abd;
-        }
-
-        .stats {
-            font-size: 14px;
-            color: #ccc;
-        }
-
-        .visualization-container {
-            flex: 1;
-            position: relative;
-            overflow: hidden;
-        }
-
-        #graph {
+        /* Animated background */
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            background: #1a1a1a;
+            z-index: -1;
+            background: 
+                radial-gradient(ellipse at 20% 20%, rgba(6, 182, 212, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(168, 85, 247, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(244, 63, 94, 0.05) 0%, transparent 60%);
         }
 
-        .node {
-            cursor: pointer;
-            stroke: #333;
-            stroke-width: 1.5px;
+        /* Floating orbs animation */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            animation: float 20s ease-in-out infinite;
+            z-index: -1;
         }
 
-        .node.highlighted {
-            stroke: #ff6b35;
-            stroke-width: 3px;
+        .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: linear-gradient(135deg, #06b6d4, #22d3ee);
+            top: -100px;
+            left: -100px;
+            animation-delay: 0s;
         }
 
-        .node.dependency {
-            stroke: #4a90e2;
-            stroke-width: 2px;
+        .orb-2 {
+            width: 350px;
+            height: 350px;
+            background: linear-gradient(135deg, #a855f7, #e879f9);
+            bottom: -100px;
+            right: -100px;
+            animation-delay: -7s;
         }
 
-        .link {
-            stroke: #666;
-            stroke-opacity: 0.6;
-            stroke-width: 1px;
-        }
-
-        .link.highlighted {
-            stroke: #ff6b35;
-            stroke-opacity: 1;
-            stroke-width: 2px;
-        }
-
-        .link.dependency {
-            stroke: #4a90e2;
-            stroke-opacity: 0.8;
-            stroke-width: 1.5px;
-        }
-
-        .node-label {
-            font-size: 10px;
-            fill: #ffffff;
-            text-anchor: middle;
-            pointer-events: none;
-            font-family: 'Segoe UI', sans-serif;
-        }
-
-        .loading {
-            position: absolute;
+        .orb-3 {
+            width: 250px;
+            height: 250px;
+            background: linear-gradient(135deg, #f43f5e, #fb923c);
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 18px;
-            color: #ccc;
+            animation-delay: -14s;
         }
 
-        .controls {
+        @keyframes float {
+            0%, 100% {
+                transform: translate(0, 0) scale(1);
+            }
+            25% {
+                transform: translate(30px, -30px) scale(1.05);
+            }
+            50% {
+                transform: translate(-20px, 20px) scale(0.95);
+            }
+            75% {
+                transform: translate(-30px, -20px) scale(1.02);
+            }
+        }
+
+        /* Main container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 40px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 80px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header h1 {
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 700;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #06b6d4 0%, #22d3ee 25%, #a3e635 50%, #facc15 75%, #a855f7 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 4s linear infinite;
+        }
+
+        @keyframes shimmer {
+            to {
+                background-position: 200% center;
+            }
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #888;
+            font-weight: 300;
+            letter-spacing: 0.5px;
+        }
+
+        /* Tools grid */
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 40px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* Tool card */
+        .tool-card {
+            position: relative;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 24px;
+            padding: 48px 40px;
+            text-decoration: none;
+            color: inherit;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fadeInUp 0.8s ease-out backwards;
+        }
+
+        .tool-card:nth-child(1) {
+            animation-delay: 0.2s;
+        }
+
+        .tool-card:nth-child(2) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tool-card::before {
+            content: '';
             position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(45, 45, 45, 0.9);
-            padding: 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            color: #ccc;
+            inset: 0;
+            border-radius: 24px;
+            padding: 1px;
+            background: linear-gradient(135deg, transparent 40%, rgba(255, 255, 255, 0.1) 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.4s;
         }
 
-        .error {
-            color: #ff6b6b;
-            font-size: 14px;
-            margin-left: 10px;
+        .tool-card:hover::before {
+            opacity: 1;
         }
 
-        input[type="file"] {
-            display: none;
+        .tool-card:hover {
+            background: rgba(255, 255, 255, 0.04);
+            transform: translateY(-8px);
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.3),
+                0 0 60px var(--glow-color, rgba(6, 182, 212, 0.1));
         }
 
-        .dependency-toggle {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            background: #3a3a3a;
-            padding: 8px 12px;
-            border-radius: 4px;
-            font-size: 14px;
+        /* Simulation card glow */
+        .tool-card.simulation {
+            --glow-color: rgba(6, 182, 212, 0.15);
         }
 
-        .dependency-toggle label {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            cursor: pointer;
-            color: #ccc;
-            transition: color 0.2s;
+        .tool-card.simulation:hover .tool-icon {
+            background: linear-gradient(135deg, #06b6d4, #22d3ee, #34d399);
         }
 
-        .dependency-toggle label:hover {
-            color: #fff;
+        /* Visualizer card glow */
+        .tool-card.visualizer {
+            --glow-color: rgba(168, 85, 247, 0.15);
         }
 
-        .dependency-toggle input[type="radio"] {
-            accent-color: #4a90e2;
+        .tool-card.visualizer:hover .tool-icon {
+            background: linear-gradient(135deg, #a855f7, #e879f9, #f43f5e);
         }
 
-        .node-filters {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            background: #3a3a3a;
-            padding: 8px 12px;
-            border-radius: 4px;
-            font-size: 14px;
-            margin-top: 5px;
-        }
-
-        .node-filters label {
+        .tool-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 18px;
             display: flex;
             align-items: center;
-            gap: 5px;
-            cursor: pointer;
-            color: #ccc;
-            transition: color 0.2s;
+            justify-content: center;
+            margin-bottom: 28px;
+            font-size: 32px;
+            background: rgba(255, 255, 255, 0.05);
+            transition: all 0.4s ease;
         }
 
-        .node-filters label:hover {
-            color: #fff;
+        .tool-card h2 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            transition: color 0.3s;
         }
 
-        .node-filters input[type="checkbox"] {
-            accent-color: #4a90e2;
+        .tool-card.simulation:hover h2 {
+            color: #22d3ee;
+        }
+
+        .tool-card.visualizer:hover h2 {
+            color: #e879f9;
+        }
+
+        .tool-card p {
+            color: #666;
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .tool-arrow {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #555;
+            transition: all 0.3s;
+        }
+
+        .tool-arrow span {
+            transition: transform 0.3s;
+        }
+
+        .tool-card:hover .tool-arrow {
+            color: #888;
+        }
+
+        .tool-card:hover .tool-arrow span {
+            transform: translateX(6px);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 80px;
+            animation: fadeInUp 0.8s ease-out 0.6s backwards;
+        }
+
+        .footer a {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #ff5f5f, #ff4757);
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(255, 71, 87, 0.25);
+        }
+
+        .footer a:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(255, 71, 87, 0.35);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 40px 24px;
+            }
+
+            .tools-grid {
+                gap: 24px;
+            }
+
+            .tool-card {
+                padding: 36px 28px;
+            }
+
+            .header {
+                margin-bottom: 50px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <!-- Top row: Title and Ko-fi button -->
-            <div class="header-top">
-                <div class="header-left">
-                    <h1>Unity Asmdef Dependency Visualizer</h1>
-                </div>
-                <div class="header-right">
-                    <a href="https://ko-fi.com/stepanshamashov" target="_blank" class="kofi-button">
-                        <span class="kofi-text">☕ Support on Ko-fi</span>
-                    </a>
-                </div>
-            </div>
-            
-            <!-- Bottom row: Controls and info -->
-            <div class="header-bottom">
-                <div class="controls-section">
-                    <!-- File controls -->
-                    <div class="file-controls">
-                        <label for="folderInput" class="file-input">Select Unity Project Folder</label>
-                        <input type="file" id="folderInput" webkitdirectory multiple>
-                        <button id="reloadBtn" class="file-input" style="display: none;">Reload Project</button>
-                        <button id="clearCacheBtn" class="file-input" style="display: none;">Clear Cache</button>
-                        <button id="saveCacheBtn" class="file-input" style="display: none;">Save Cache to File</button>
-                        <button id="loadCacheBtn" class="file-input" style="display: none;">Load Cache from File</button>
-                    </div>
-                    
-                    <!-- Visualization controls -->
-                    <div class="viz-controls">
-                        <div class="dependency-toggle" id="dependencyToggle" style="display: none;">
-                            <span class="control-label">Mode:</span>
-                            <label>
-                                <input type="radio" name="depType" value="both" checked> Both
-                            </label>
-                            <label>
-                                <input type="radio" name="depType" value="outgoing"> Outgoing
-                            </label>
-                            <label>
-                                <input type="radio" name="depType" value="incoming"> Incoming
-                            </label>
-                        </div>
-                        
-                        <div class="node-filters" id="nodeFilters" style="display: none;">
-                            <span class="control-label">Show:</span>
-                            <label>
-                                <input type="checkbox" name="nodeFilter" value="Runtime" checked> Runtime
-                            </label>
-                            <label>
-                                <input type="checkbox" name="nodeFilter" value="Game" checked> Game
-                            </label>
-                            <label>
-                                <input type="checkbox" name="nodeFilter" value="Editor" checked> Editor
-                            </label>
-                            <label>
-                                <input type="checkbox" name="nodeFilter" value="Tests" checked> Tests
-                            </label>
-                            <label>
-                                <input type="checkbox" name="nodeFilter" value="Unity" checked> Unity
-                            </label>
-                            <label>
-                                <input type="checkbox" name="nodeFilter" value="Third Party" checked> Third Party
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Status section -->
-                <div class="status-section">
-                    <div class="stats" id="stats">No project loaded</div>
-                    <div class="error" id="error"></div>
-                </div>
-            </div>
-        </div>
-        <div class="visualization-container">
-            <div class="loading" id="loading" style="display: none;">Processing asmdef files...</div>
-            <div class="controls">
-                <div>Mouse: Pan & Zoom</div>
-                <div>Click: Highlight Dependencies</div>
-                <div>Double-click: Reset</div>
-            </div>
-            <svg id="graph"></svg>
-        </div>
-    </div>
+    <div class="bg-gradient"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
 
-    <script src="asmdef-parser.js"></script>
-    <script src="debug-export.js"></script>
-    <script src="visualizer.js"></script>
+    <div class="container">
+        <header class="header">
+            <h1>Stepan's Tools</h1>
+            <p>Interactive visualizations and creative experiments</p>
+        </header>
+
+        <div class="tools-grid">
+            <a href="simulation.html" class="tool-card simulation">
+                <div class="tool-icon">🔮</div>
+                <h2>jija</h2>
+                <p>Dynamic force-directed graph simulation. Click to spawn nodes, watch them connect and evolve with beautiful physics-based interactions.</p>
+                <div class="tool-arrow">
+                    Launch simulation <span>→</span>
+                </div>
+            </a>
+
+            <a href="visualizer.html" class="tool-card visualizer">
+                <div class="tool-icon">📊</div>
+                <h2>Asmdef Visualizer</h2>
+                <p>Visualize Unity project dependencies. Explore assembly definitions and their connections in an interactive force-directed graph.</p>
+                <div class="tool-arrow">
+                    Open visualizer <span>→</span>
+                </div>
+            </a>
+        </div>
+
+        <footer class="footer">
+            <a href="https://ko-fi.com/stepanshamashov" target="_blank">
+                ☕ Support on Ko-fi
+            </a>
+        </footer>
+    </div>
 </body>
 </html>
